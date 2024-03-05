@@ -11,7 +11,7 @@
 /*/appsettings.json
 /*/appsettings.production.json
 /*/appsettings.development.json
-
+/samples/python/02.echo-bot/.venv
 # webapi app settings
 /*/web.config
 
@@ -299,3 +299,6 @@ rush.json
 /experimental/common/scripts
 /experimental/generation/generator/.rush
 orchestrator.json
+teams_bot_key
+teams_bot_key.pub
+samples/python/02.echo-bot/.env
