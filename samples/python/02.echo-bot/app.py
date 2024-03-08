@@ -17,6 +17,7 @@ from botbuilder.schema import Activity, ActivityTypes
 from botbuilder.schema import Activity, ActivityTypes
  
 from bots import EchoBot
+from helpers import APIHandler, TokenManager
 from config import DefaultConfig
  
 CONFIG = DefaultConfig()
@@ -55,10 +56,7 @@ async def on_error(context: TurnContext, error: Exception):
  
  
 ADAPTER.on_turn_error = on_error
- 
-# Create the Bot
-BOT = EchoBot()
- 
+
  
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
@@ -87,6 +85,9 @@ APP = web.Application(middlewares=[aiohttp_error_middleware])
 APP.router.add_post("/api/messages", messages)
  
 if __name__ == "__main__":
+    token_manager = TokenManager()
+    api_handler = APIHandler()
+    BOT = EchoBot(token_manager, api_handler)
     try:
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
     except Exception as error:

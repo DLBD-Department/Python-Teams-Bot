@@ -6,6 +6,12 @@
 *.user
 *.userosscache
 *.sln.docstates
+nohup.out
+users.csv
+*.code-workspace
+*.wal
+*.save
+database.db
 
 # dotnet core app settings
 /*/appsettings.json
