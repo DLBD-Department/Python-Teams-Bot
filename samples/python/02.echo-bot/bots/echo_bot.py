@@ -18,13 +18,15 @@ from botbuilder.schema import (
     CardImage,
 )
 
+
 class EchoBot(ActivityHandler):
     """
     A template bot that talks to the user:
-        - uses a custom LLM API
+        - uses a custom LLM API to respond ot user message
         - asks for feedback
         - stores basic user info to internal db
     """
+
     def __init__(self, token_manager, api_handler):
         self.token_manager = token_manager
         self.api_handler = api_handler
@@ -32,39 +34,36 @@ class EchoBot(ActivityHandler):
     async def send_feedback_card(self, turn_context: TurnContext):
         """Send a feedback card to the user."""
         card = HeroCard(
-            title="If you want, you can rate your experience",
-            text="Click on the thumbs to rate.",
+            # title="If you want, you can rate your experience",
+            text="Click on the thumbs to rate the answer.",
             buttons=[
-                CardAction(
-                    type=ActionTypes.im_back,
-                    title="👍🏽",
-                    value="thumbs_up"
-                ),
-                CardAction(
-                    type=ActionTypes.im_back,
-                    title="👎🏽",
-                    value="thumbs_down"
-                ),
+                CardAction(type=ActionTypes.im_back, title="👍🏽", value="thumbs_up"),
+                CardAction(type=ActionTypes.im_back, title="👎🏽", value="thumbs_down"),
                 # CardAction(
                 #     type=ActionTypes.im_back,
                 #     title="⭐⭐⭐",
                 #     value="3_stars"
                 # ),
-            ]
+            ],
         )
-        attachment = Attachment(content_type="application/vnd.microsoft.card.hero", content=card)
+        attachment = Attachment(
+            content_type="application/vnd.microsoft.card.hero", content=card
+        )
         await turn_context.send_activity(MessageFactory.attachment(attachment))
 
     async def on_message_reaction_activity(self, turn_context: TurnContext):
         """Handle the user's feedback."""
         feedback = turn_context.activity.text
 
-        if feedback in ['thumbs_up', 'thumbs_down']:    #, '3_stars', '4_stars', '5_stars']:
-            rating = feedback                           #.split('_')[0]
+        if feedback in [
+            "thumbs_up",
+            "thumbs_down",
+        ]:  # , '3_stars', '4_stars', '5_stars']:
+            rating = feedback  # .split('_')[0]
             logging.info(f"User rated with {rating}.")
             await turn_context.send_activity(
                 f"Thank you for your feedback! You rated this experience with {rating}."
-                )
+            )
 
     async def on_members_added_activity(
         self, members_added: [ChannelAccount], turn_context: TurnContext
@@ -82,12 +81,14 @@ class EchoBot(ActivityHandler):
                     self.token_manager.store_token(member.id, api_token)
 
                 except Exception as e:
-                    logging.error(f'Failed to find user. Exiting program. Error message:{e}')
+                    logging.error(
+                        f"Failed to find user. Exiting program. Error message:{e}"
+                    )
                     sys.exit()
 
                 logging.debug(
                     f"\n\n{ user_info.email=}\n\n{member.id=}\n\n{api_token=}\n\n"
-                    )
+                )
                 await turn_context.send_activity(f"Hello and welcome!")
 
     async def on_message_activity(self, turn_context: TurnContext):
@@ -100,10 +101,12 @@ class EchoBot(ActivityHandler):
             await self.on_message_reaction_activity(turn_context)
         else:
             # Retrieve the api_token using user_id from the database
-            api_token = self.token_manager.retrieve_token(turn_context.activity.from_property.id)
+            api_token = self.token_manager.retrieve_token(
+                turn_context.activity.from_property.id
+            )
 
-            logging.debug(f'\n{turn_context.activity.from_property.id=}\n')
-            logging.debug(f'\n{api_token=}\n')
+            logging.debug(f"\n{turn_context.activity.from_property.id=}\n")
+            logging.debug(f"\n{api_token=}\n")
 
             # await turn_context.send_activity(f"User: {text}")
 
