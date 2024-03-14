@@ -12,6 +12,7 @@ from botbuilder.core import (
     TurnContext,
 )
 from botbuilder.core.integration import aiohttp_error_middleware
+from botbuilder.core import ShowTypingMiddleware
 from botbuilder.integration.aiohttp import CloudAdapter, ConfigurationBotFrameworkAuthentication
 from botbuilder.schema import Activity, ActivityTypes
 from botbuilder.schema import Activity, ActivityTypes
@@ -25,7 +26,6 @@ CONFIG = DefaultConfig()
 # Create adapter.
 # See https://aka.ms/about-bot-adapter to learn more about how bots work.
 ADAPTER = CloudAdapter(ConfigurationBotFrameworkAuthentication(CONFIG))
- 
  
 # Catch-all for errors.
 async def on_error(context: TurnContext, error: Exception):
@@ -56,6 +56,7 @@ async def on_error(context: TurnContext, error: Exception):
  
  
 ADAPTER.on_turn_error = on_error
+ADAPTER.use(ShowTypingMiddleware(delay=0, period=10))
 
  
 # Listen for incoming requests on /api/messages
