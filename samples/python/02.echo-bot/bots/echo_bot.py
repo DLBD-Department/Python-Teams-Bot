@@ -27,8 +27,8 @@ class EchoBot(ActivityHandler):
     async def send_feedback_card(self, turn_context: TurnContext):
         # Create a HeroCard with star rating buttons for feedback
         card = HeroCard(
-            title="Please rate your experience",
-            text="Click on the stars to rate.",
+            title="If you want, rate your experience",
+            text="Click on the thumbs to rate.",
             buttons=[
                 CardAction(
                     type=ActionTypes.im_back,
@@ -64,12 +64,12 @@ class EchoBot(ActivityHandler):
         # Handle the feedback when the user clicks on a star rating
         feedback = turn_context.activity.text
 
-        if feedback in ['thumbs_up', 'thumbs_down']#, '3_stars', '4_stars', '5_stars']:
+        if feedback in ['thumbs_up', 'thumbs_down']:#, '3_stars', '4_stars', '5_stars']:
             # Map the feedback to a numerical rating
-            rating = feedback.split('_')[0]
+            rating = feedback #.split('_')[0]
             # Here you can handle the rating value, e.g., store it, respond to the user, etc.
-            logging.info(f"User rated with {rating} stars")
-            await turn_context.send_activity(f"Thank you for your feedback! You rated this experience with {rating} stars.")
+            logging.info(f"User rated with {rating} thumbs.")
+            await turn_context.send_activity(f"Thank you for your feedback! You rated this experience with {rating}.")
 
     async def on_members_added_activity(
         self, members_added: [ChannelAccount], turn_context: TurnContext
@@ -96,23 +96,24 @@ class EchoBot(ActivityHandler):
 
     async def on_message_activity(self, turn_context: TurnContext):
         # Extract text from the incoming activity
-        feedback_str = "Thank you for your feedback! You rated this experience with"
+        feedback_str = "thumbs_"
         text = turn_context.activity.text
 
         if feedback_str in text:
-            pass
+            await self.on_message_reaction_activity(turn_context)
         # Retrieve the api_token using user_id from the database
-        api_token = self.token_manager.retrieve_token(turn_context.activity.from_property.id)
+        else:
+            api_token = self.token_manager.retrieve_token(turn_context.activity.from_property.id)
 
-        logging.debug(f'\n{turn_context.activity.from_property.id=}\n')
-        logging.debug(f'\n{api_token=}\n')
+            logging.debug(f'\n{turn_context.activity.from_property.id=}\n')
+            logging.debug(f'\n{api_token=}\n')
 
-        # Send the user message
-        await turn_context.send_activity(f"User: {text}")
+            # Send the user message
+            # await turn_context.send_activity(f"User: {text}")
 
-        await turn_context.send_activity(Activity(type=ActivityTypes.typing))
-        time.sleep(3)  # wait before sending the next activity
+            await turn_context.send_activity(Activity(type=ActivityTypes.typing))
+            time.sleep(3)  # wait before sending the next activity
 
-        # Send the message and wait for the response
-        await self.api_handler.send_message(api_token, text, turn_context)
-        await self.send_feedback_card(turn_context)
+            # Send the message and wait for the response
+            await self.api_handler.send_message(api_token, text, turn_context)
+            await self.send_feedback_card(turn_context)
