@@ -68,7 +68,7 @@ class EchoBot(ActivityHandler):
             # Map the feedback to a numerical rating
             rating = feedback #.split('_')[0]
             # Here you can handle the rating value, e.g., store it, respond to the user, etc.
-            logging.info(f"User rated with {rating} thumbs.")
+            logging.info(f"User rated with {rating}.")
             await turn_context.send_activity(f"Thank you for your feedback! You rated this experience with {rating}.")
 
     async def on_members_added_activity(
