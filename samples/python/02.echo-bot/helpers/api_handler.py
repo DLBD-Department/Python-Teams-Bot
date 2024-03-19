@@ -16,17 +16,20 @@ GPA_ADMIN_TOKEN = os.getenv('GPA_ADMIN_TOKEN')
 
 
 class APIHandler:
-    def __init__(self):
+    def __init__(self, logger: logging.Logger):
         self.email = None
+        self.logger = logger
 
     def set_email(self, email):
+        self.logger.info('Setting email...')
         self.email = email
 
-    async def get_gpa_token_data(self, user_email) -> str:
+    async def get_gpa_token_data(self) -> str:
 
         token_data = None
         activate_params = {"emails": [self.email]}
-        params = {"email": f"{self.email}"}
+        params = {"email": self.email}
+        self.logger.info(f"\n{params=}\n")
         headers = {
             'Content-Type': 'application/json',
             "accept": "application/json",
@@ -35,32 +38,34 @@ class APIHandler:
 
         async with aiohttp.ClientSession() as session:
             try:
-                logging.error("Registering user...")
+                self.logger.info("Registering user...")
                 async with session.post(
                     URL_REGISTER_USER, data=json.dumps(params), headers=headers
                     ) as response:
                     if response.status == 200:
                         token_data = await response.json()
-                        logging.error(f"\n{token_data=}\n")
-                logging.error("Activating user...")
+                        self.logger.info(f"\n{token_data=}\n")
+                self.logger.info("Activating user...")
                 async with session.post(
                     URL_ACTIVATE_USER, data=json.dumps(activate_params), headers=headers
                     ) as response:
                     if response.status == 200:
                         data = await response.json()
+                        self.logger.info(f"{token_data['api_token']=}")
                         return token_data['api_token']
             except Exception as e:
+                self.logger.info(f"User already has a token, getting the token...")
                 async with session.get(
-                    URL_GET_TOKEN, data=json.dumps(params), headers=headers
+                    URL_GET_TOKEN, params=params, headers=headers
                     ) as response:
                     if response.status == 200:
                         data = await response.json()
+                        self.logger.info(f"{data['api_token']=}")
                         return data['api_token']
 
     async def send_message(self, api_token, text, turn_context):
 
         async with aiohttp.ClientSession() as session:
-
             headers = {
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_token}"

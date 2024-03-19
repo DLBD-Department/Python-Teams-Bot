@@ -6,17 +6,19 @@ import logging
 
 
 class TokenManager:
-    def __init__(self):
+    def __init__(self, logger: logging.Logger):
         self.conn = duckdb.connect('database.db')
         self.c = self.conn.cursor()
-        if os.path.exists('users.csv'):
-            self.conn.execute("COPY users FROM 'users.csv' (HEADER)")
+        self.logger = logger
+        self.c.execute("""DROP TABLE IF EXISTS users""")
         self.c.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                user_id VARCHAR,
-                api_token VARCHAR
+            CREATE TABLE users (
+            user_id VARCHAR PRIMARY KEY,
+            api_token VARCHAR
             )
         """)
+        if os.path.exists('users.csv'):
+            self.conn.execute("COPY users FROM 'users.csv' (HEADER)")
 
     def store_token(self, user_id, api_token) -> None:
         self.c.execute(
@@ -31,6 +33,6 @@ class TokenManager:
         return row[0] if row else None
 
     def show_info(self, turn_context):
-        logging.debug(self.conn.sql(
+            self.logger.info(self.conn.sql(
             f"SELECT api_token FROM users WHERE user_id = '{turn_context.activity.from_property.id}'"
             ).show())

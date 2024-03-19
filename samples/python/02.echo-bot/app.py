@@ -18,9 +18,24 @@ from botbuilder.schema import Activity, ActivityTypes
 from botbuilder.schema import Activity, ActivityTypes
  
 from bots import EchoBot
-from helpers import APIHandler, TokenManager
+from helpers import APIHandler, TokenManager, HardcodedUserValidator
 from config import DefaultConfig
  
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+c_handler = logging.StreamHandler()
+f_handler = logging.FileHandler('bot.log')
+c_handler.setLevel(logging.INFO)
+f_handler.setLevel(logging.INFO)
+c_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
+f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
+c_handler.setFormatter(c_format)
+f_handler.setFormatter(f_format)
+logger.addHandler(c_handler)
+logger.addHandler(f_handler)
+
+
+
 CONFIG = DefaultConfig()
  
 # Create adapter.
@@ -73,7 +88,7 @@ async def messages(req: Request) -> Response:
     response = await ADAPTER.process_activity(auth_header, activity, BOT.on_turn)
  
     if response:
-        logging.error(f"\n[Bot Response]: {response}\n")
+        logger.info(f"\n[Bot Response]: {response}\n")
          
         if response.status_code == 200:
             return web.json_response(data=response.body, status=response.status)
@@ -86,9 +101,10 @@ APP = web.Application(middlewares=[aiohttp_error_middleware])
 APP.router.add_post("/api/messages", messages)
  
 if __name__ == "__main__":
-    token_manager = TokenManager()
-    api_handler = APIHandler()
-    BOT = EchoBot(token_manager, api_handler)
+    token_manager = TokenManager(logger=logger)
+    api_handler = APIHandler(logger=logger)
+    hardcoded_user_validator = HardcodedUserValidator()
+    BOT = EchoBot(token_manager, api_handler, hardcoded_user_validator)
     try:
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
     except Exception as error:
