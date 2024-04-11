@@ -24,44 +24,62 @@ class APIHandler:
         self.logger.info('Setting email...')
         self.email = email
 
-    async def get_gpa_token_data(self) -> str:
-
-        token_data = None
-        activate_params = {"emails": [self.email]}
+    async def register_user(self):
         params = {"email": self.email}
-        self.logger.info(f"\n{params=}\n")
-        headers = {
+        headers = self.build_headers()
+        async with aiohttp.ClientSession() as session:
+            response = await session.post(URL_REGISTER_USER, data=json.dumps(params), headers=headers)
+        return response
+
+    async def activate_user(self):
+        activate_params = {"emails": [self.email]}
+        headers = self.build_headers()
+        async with aiohttp.ClientSession() as session:
+            response = await session.post(URL_ACTIVATE_USER, data=json.dumps(activate_params), headers=headers)
+        return response
+
+    async def get_token(self):
+        params = {"email": self.email}
+        headers = self.build_headers()
+        async with aiohttp.ClientSession() as session:
+            response = await session.get(URL_GET_TOKEN, params=params, headers=headers)
+        return response
+
+    async def get_gpa_token_data(self) -> str:
+        token_data = None
+        # self.logger.info(f"\n{'email': self.email}\n")
+        
+        try:
+            self.logger.info("Registering user...")
+            response = await self.register_user()
+            if response.status == 200:
+                token_data = await response.json()
+                self.logger.info(f"\n{token_data=}\n")
+                
+                self.logger.info("Activating user...")
+                response = await self.activate_user()
+                if response.status == 200:
+                    data = await response.json()
+                    self.logger.info(f"{token_data['api_token']=}")
+                    return token_data['api_token']
+            
+            self.logger.info("User already has a token, getting the token...")
+            response = await self.get_token()
+            if response.status == 200:
+                data = await response.json()
+                self.logger.info(f"{data['api_token']=}")
+                return data['api_token']
+                
+        except Exception as e:
+            self.logger.error(f"Failed to get or set user token. Error: {e}")
+            # Potentially handle or re-raise exception
+
+    def build_headers(self):
+        return {
             'Content-Type': 'application/json',
             "accept": "application/json",
             "Authorization": f"Bearer {GPA_ADMIN_TOKEN}"
         }
-
-        async with aiohttp.ClientSession() as session:
-            try:
-                self.logger.info("Registering user...")
-                async with session.post(
-                    URL_REGISTER_USER, data=json.dumps(params), headers=headers
-                    ) as response:
-                    if response.status == 200:
-                        token_data = await response.json()
-                        self.logger.info(f"\n{token_data=}\n")
-                self.logger.info("Activating user...")
-                async with session.post(
-                    URL_ACTIVATE_USER, data=json.dumps(activate_params), headers=headers
-                    ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        self.logger.info(f"{token_data['api_token']=}")
-                        return token_data['api_token']
-            except Exception as e:
-                self.logger.info(f"User already has a token, getting the token...")
-                async with session.get(
-                    URL_GET_TOKEN, params=params, headers=headers
-                    ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        self.logger.info(f"{data['api_token']=}")
-                        return data['api_token']
 
     async def send_message(self, api_token, text, turn_context):
 
@@ -86,3 +104,44 @@ class APIHandler:
                             "An error occurred while processing your request"
                             )
                         )
+
+
+    # async def get_gpa_token_data(self) -> str:
+
+    #     token_data = None
+    #     activate_params = {"emails": [self.email]}
+    #     params = {"email": self.email}
+    #     self.logger.info(f"\n{params=}\n")
+    #     headers = {
+    #         'Content-Type': 'application/json',
+    #         "accept": "application/json",
+    #         "Authorization": f"Bearer {GPA_ADMIN_TOKEN}"
+    #     }
+
+    #     async with aiohttp.ClientSession() as session:
+    #         try:
+    #             self.logger.info("Registering user...")
+    #             async with session.post(
+    #                 URL_REGISTER_USER, data=json.dumps(params), headers=headers
+    #                 ) as response:
+    #                 if response.status == 200:
+    #                     token_data = await response.json()
+    #                     self.logger.info(f"\n{token_data=}\n")
+    #             self.logger.info("Activating user...")
+    #             async with session.post(
+    #                 URL_ACTIVATE_USER, data=json.dumps(activate_params), headers=headers
+    #                 ) as response:
+    #                 if response.status == 200:
+    #                     data = await response.json()
+    #                     self.logger.info(f"{token_data['api_token']=}")
+    #                     return token_data['api_token']
+    #         except Exception as e:
+    #             self.logger.info(f"User already has a token, getting the token...")
+    #             async with session.get(
+    #                 URL_GET_TOKEN, params=params, headers=headers
+    #                 ) as response:
+    #                 if response.status == 200:
+    #                     data = await response.json()
+    #                     self.logger.info(f"{data['api_token']=}")
+    #                     return data['api_token']
+

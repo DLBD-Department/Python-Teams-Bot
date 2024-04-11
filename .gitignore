@@ -8,6 +8,10 @@
 *.sln.docstates
 nohup.out
 users.csv
+samples/python/02.echo-bot/.env
+samples/python/02.echo-bot/conversation_references.json
+samples/python/02.echo-bot/user_activity.csv
+samples/python/02.echo-bot/test_conversation_reference.py
 *.code-workspace
 *.wal
 *.save
@@ -307,4 +311,3 @@ rush.json
 orchestrator.json
 teams_bot_key
 teams_bot_key.pub
-samples/python/02.echo-bot/.env

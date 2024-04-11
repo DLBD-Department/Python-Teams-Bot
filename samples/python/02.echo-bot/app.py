@@ -5,7 +5,8 @@ from datetime import datetime
 from http import HTTPStatus
 import requests
 import logging
- 
+import json
+
 from aiohttp import web
 from aiohttp.web import Request, Response, json_response
 from botbuilder.core import (
@@ -18,7 +19,7 @@ from botbuilder.schema import Activity, ActivityTypes
 from botbuilder.schema import Activity, ActivityTypes
  
 from bots import EchoBot
-from helpers import APIHandler, TokenManager, HardcodedUserValidator
+from helpers import APIHandler, TokenManager, HardcodedUserValidator, PresenceRecorder
 from config import DefaultConfig
  
 logger = logging.getLogger(__name__)
@@ -79,23 +80,29 @@ async def messages(req: Request) -> Response:
     # Main bot message handler.
     if "application/json" in req.headers["Content-Type"]:
         body = await req.json()
+        # logger.info(f"Payload: {json.dumps(body)}")
     else:
         return Response(status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
  
     activity = Activity().deserialize(body)
     auth_header = req.headers["Authorization"] if "Authorization" in req.headers else ""
+    # logger.info(f'{auth_header=}')
  
-    response = await ADAPTER.process_activity(auth_header, activity, BOT.on_turn)
- 
+    try:
+        response = await ADAPTER.process_activity(auth_header, activity, BOT.on_turn)
+    except Exception as error:
+        raise error
+        logger.error(f'{error=}')
+
     if response:
-        logger.info(f"\n[Bot Response]: {response}\n")
+        response_dict = response.__dict__
+        logger.info(f"\n[Bot Response]: {response_dict}\n")
          
         if response.status_code == 200:
             return web.json_response(data=response.body, status=response.status)
         else:
             return Response(status=web.HTTPInternalServerError.status_code)
     return Response(status=HTTPStatus.OK)
- 
  
 APP = web.Application(middlewares=[aiohttp_error_middleware])
 APP.router.add_post("/api/messages", messages)
@@ -104,7 +111,13 @@ if __name__ == "__main__":
     token_manager = TokenManager(logger=logger)
     api_handler = APIHandler(logger=logger)
     hardcoded_user_validator = HardcodedUserValidator()
-    BOT = EchoBot(token_manager, api_handler, hardcoded_user_validator)
+    presence_recorder = PresenceRecorder()
+    BOT = EchoBot(
+        ADAPTER, 
+        token_manager, 
+        api_handler, 
+        hardcoded_user_validator,
+        presence_recorder)
     try:
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
     except Exception as error:
