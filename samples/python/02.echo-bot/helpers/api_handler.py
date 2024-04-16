@@ -12,6 +12,7 @@ URL_GET_TOKEN = os.getenv('GPA_API_KEY')
 URL_REGISTER_USER = os.getenv('GPA_API_REGISTER')
 URL_ACTIVATE_USER = os.getenv('GPA_API_ACTIVATE')
 URL_GPA_API_CHAT = os.getenv('GPA_API_CHAT')
+URL_GPA_API_RESET = os.getenv('GPA_API_RESET')
 GPA_ADMIN_TOKEN = os.getenv('GPA_ADMIN_TOKEN')
 
 
@@ -48,28 +49,28 @@ class APIHandler:
     async def get_gpa_token_data(self) -> str:
         token_data = None
         # self.logger.info(f"\n{'email': self.email}\n")
-        
+
         try:
             self.logger.info("Registering user...")
             response = await self.register_user()
             if response.status == 200:
                 token_data = await response.json()
                 self.logger.info(f"\n{token_data=}\n")
-                
+
                 self.logger.info("Activating user...")
                 response = await self.activate_user()
                 if response.status == 200:
                     data = await response.json()
                     self.logger.info(f"{token_data['api_token']=}")
                     return token_data['api_token']
-            
+
             self.logger.info("User already has a token, getting the token...")
             response = await self.get_token()
             if response.status == 200:
                 data = await response.json()
                 self.logger.info(f"{data['api_token']=}")
                 return data['api_token']
-                
+
         except Exception as e:
             self.logger.error(f"Failed to get or set user token. Error: {e}")
             # Potentially handle or re-raise exception
@@ -90,21 +91,37 @@ class APIHandler:
             }
             data = {"q": text}
 
-            async with session.post(
-                URL_GPA_API_CHAT, headers=headers, json=data
+            if text == "/reset":
+                async with session.post(
+                    URL_GPA_API_RESET, headers=headers, json=data
                 ) as response:
-                if response.status == 200:
-                    response_data = await response.json()
-                    await turn_context.send_activity(
-                        MessageFactory.text(response_data['content'])
+                    if response.status == 200:
+                        response_data = await response.json()
+                        await turn_context.send_activity(
+                            MessageFactory.text("Conversation has been reset successfully.")
                         )
-                else:
-                    await turn_context.send_activity(
-                        MessageFactory.text(
-                            "An error occurred while processing your request"
+                    else:
+                        await turn_context.send_activity(
+                            MessageFactory.text(
+                                "An error occurred while resetting the conversation."
                             )
                         )
 
+            else:
+                async with session.post(
+                    URL_GPA_API_CHAT, headers=headers, json=data
+                ) as response:
+                    if response.status == 200:
+                        response_data = await response.json()
+                        await turn_context.send_activity(
+                            MessageFactory.text(response_data['content'])
+                        )
+                    else:
+                        await turn_context.send_activity(
+                            MessageFactory.text(
+                                "An error occurred while processing your request"
+                            )
+                        )
 
     # async def get_gpa_token_data(self) -> str:
 
