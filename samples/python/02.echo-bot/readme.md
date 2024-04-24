@@ -1,7 +1,7 @@
 
 # Teams Python Bot
 
-Teams bot is an advanced template-based bot that engages users through conversational interfaces with special fronted features,  integrates with custom APIs for dynamic responses, and incorporates feedback mechanisms for future improvements. 
+Teams bot is an advanced template-based bot that engages users through conversational interfaces with special frontend features, integrates with custom APIs for dynamic responses, and incorporates feedback mechanisms for future improvements. 
 ## Features
 
 - **Custom API Integration:** Leverages a custom API to generate responses, enhancing user interactions with dynamic content.
@@ -40,10 +40,14 @@ Once the bot is running, it can be interacted with through Microsoft Teams. User
 
 - **Custom LLM API:** Implement your own LLM API by modifying the `api_handler` logic.
 - **User Validation:** Add or modify user validation logic within the `validate_and_store_user_info` method.
-- **Additional Commands:** Extend the `handle_message` method to support more commands or integrate with other APIs.
+
 
 ## Troubleshooting
 
 - **Logging:** Check the `bot.log` file and console output for any errors or warnings.
 - **Dependencies:** Ensure all dependencies are correctly installed and compatible with your Python version.
 
+## Documentation and practices
+
+- [Microsoft Teams Bot Framework](https://docs.microsoft.com/en-us/microsoftteams/platform/bots/what-are-bots)
+- This code tries to adhere to SOLID principles, uses docstrings and typehints wherever possible according to PEP 8 guidelines.
