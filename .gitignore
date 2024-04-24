@@ -311,3 +311,5 @@ rush.json
 orchestrator.json
 teams_bot_key
 teams_bot_key.pub
+samples/python/02.echo-bot/nohup_old.out
+samples/python/02.echo-bot/bots/.echo_bot.py.swp

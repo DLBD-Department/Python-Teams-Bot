@@ -8,7 +8,7 @@ from quart import Quart, request, Response
 from botbuilder.core import BotFrameworkAdapterSettings, TurnContext, BotFrameworkAdapter
 from botbuilder.schema import Activity, ActivityTypes
 
-from bots import EchoBot
+from bots import FlamelBot
 
 # Create the loop and Quart APP
 APP = Quart(__name__, instance_relative_config=True)
@@ -47,7 +47,7 @@ async def on_error(context: TurnContext, error: Exception):
 ADAPTER.on_turn_error = on_error
 
 # Create the Bot
-BOT = EchoBot()
+BOT = FlamelBot()
 
 # Listen for incoming requests on /api/messages
 @APP.route("/api/messages", methods=["POST"])

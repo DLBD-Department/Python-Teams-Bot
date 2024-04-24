@@ -18,7 +18,7 @@ from botbuilder.integration.aiohttp import CloudAdapter, ConfigurationBotFramewo
 from botbuilder.schema import Activity, ActivityTypes
 from botbuilder.schema import Activity, ActivityTypes
  
-from bots import EchoBot
+from bots import FlamelBot
 from helpers import APIHandler, TokenManager, HardcodedUserValidator, PresenceRecorder
 from config import DefaultConfig
  
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     api_handler = APIHandler(logger=logger)
     hardcoded_user_validator = HardcodedUserValidator()
     presence_recorder = PresenceRecorder()
-    BOT = EchoBot(
+    BOT = FlamelBot(
         ADAPTER, 
         token_manager, 
         api_handler, 
