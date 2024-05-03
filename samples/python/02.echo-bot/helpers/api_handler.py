@@ -143,7 +143,7 @@ class APIHandler:
             }
             data = {"q": text}
 
-            if text == "/reset":
+            if text == "/reset" or text == "Start New Session":
                 self.logger.info("Resetting the conversation history...")
 
                 async with session.post(
@@ -151,7 +151,7 @@ class APIHandler:
                 ) as response:
                     if response.status == 200:
                         await turn_context.send_activity(
-                            MessageFactory.text("Conversation has been reset successfully.")
+                            MessageFactory.text("New session has started.")
                         )
                     else:
                         await turn_context.send_activity(
@@ -166,18 +166,22 @@ class APIHandler:
                     if response.status == 200:
                         response_data = await response.json()
                         self.logger.info(f"\n{response_data['content']=}\n")
-                        if "How can I assist you today?" in response_data['content']:
-                            await turn_context.send_activity(
-                                MessageFactory.text(response_data['content']))
-                        else:
-                            await turn_context.send_activity(
-                                MessageFactory.attachment(
-                                    self.add_text_to_adaptive_card(
-                                        response_data['content'],
-                                        response_data['content']
-                                        )
-                                    )
-                                )
+                        await turn_context.send_activity(
+                            MessageFactory.text(response_data['content'])
+                            )
+
+                        # if "How can I assist you today?" in response_data['content']:
+                        #     await turn_context.send_activity(
+                        #         MessageFactory.text(response_data['content']))
+                        # else:
+                        #     await turn_context.send_activity(
+                        #         MessageFactory.attachment(
+                        #             self.add_text_to_adaptive_card(
+                        #                 response_data['content'],
+                        #                 response_data['content']
+                        #                 )
+                        #             )
+                        #         )
                     else:
                         await turn_context.send_activity(
                             MessageFactory.text(

@@ -22,8 +22,9 @@ from botbuilder.schema import (
     HeroCard,
     CardImage,
     ConversationReference,
+    SuggestedActions,
 )
-from helpers.custom_messages import get_en_welcome_message, get_it_welcome_message
+from helpers.custom_messages import get_en_welcome_message, get_it_welcome_message, custom_actions_card, send_feedback_card
 
 load_dotenv()
 
@@ -98,68 +99,32 @@ class FlamelBot(ActivityHandler):
                 lambda turn_context: turn_context.send_activity(message),
                 bot_id,
             )
+    async def _send_suggested_actions(self, turn_context: TurnContext):
+        """
+        Creates and sends an activity with suggested actions to the user. When the user
+        clicks one of the buttons the text value from the "CardAction" will be displayed
+        in the channel just as if the user entered the text. There are multiple
+        "ActionTypes" that may be used for different situations.
+        """
+
+        reply = MessageFactory.text("\u200B")
+        reply.suggested_actions = SuggestedActions(
+            actions=[
+                CardAction(
+                    title="Start New Session",
+                    type=ActionTypes.im_back,
+                    value="/reset",
+                    image="https://via.placeholder.com/20/FF0000?text=R",
+                    image_alt_text="R",
+                ),
+            ]
+        )
+
+        return await turn_context.send_activity(reply)
 
     async def _send_proactive_message(self, message: str) -> Callable[[TurnContext], Future]:
         """Generates a lambda to send a proactive message. The lambda accepts a TurnContext and returns a Future."""
         return lambda turn_context: turn_context.send_activity(message)
-        
-    async def custom_actions_card(self, turn_context: TurnContext, locale: str) -> None:
-        """Send a custom actions card to the user."""
-        en_card = HeroCard(
-            # title="If you want, you can rate your experience",
-            buttons=[
-                CardAction(
-                    type=ActionTypes.post_back,
-                    title="Tell me something about an Alkemy project",
-                    value="Tell me something about alkemy project with pirelli",
-                ),
-                CardAction(
-                    type=ActionTypes.post_back,
-                    title="What is AI Evolution hub?",
-                    value="What is AI Evolution hub?",
-                ),
-            ]
-        )
-        it_card = HeroCard(
-            # title="Se sei interessato, puoi valutare la tua esperienza",
-            buttons=[
-                CardAction(
-                    type=ActionTypes.post_back,
-                    title="Informazioni su un progetto di Alkemy",
-                    value="Informazioni su un progetto di Alkemy con Pirelli",
-                ),
-                CardAction(
-                    type=ActionTypes.post_back,
-                    title="Cosa è l'AI Evolution Hub?",
-                    value="Cosa è l'AI Evolution Hub?",
-                ),
-            ]
-        )
-        if "en" in locale:
-            attachment = Attachment(
-                content_type="application/vnd.microsoft.card.hero", content=en_card
-            )
-            await turn_context.send_activity(MessageFactory.attachment(attachment))
-        else:
-            attachment = Attachment(
-                content_type="application/vnd.microsoft.card.hero", content=it_card
-            )
-            await turn_context.send_activity(MessageFactory.attachment(attachment))
-
-    async def send_feedback_card(self, turn_context: TurnContext) -> None:
-        """Send a feedback card to the user."""
-        card = HeroCard(
-            # title="If you want, you can rate your experience",
-            # text="Click on the thumbs to rate the answer.",
-            buttons=[
-                CardAction(type=ActionTypes.post_back, title="👍", value="thumbs_up"),
-                CardAction(type=ActionTypes.post_back, title="👎", value="thumbs_down"),
-            ],
-        )
-        attachment = Attachment(
-            content_type="application/vnd.microsoft.card.hero", content=card
-        )
-        await turn_context.send_activity(MessageFactory.attachment(attachment))
 
     async def validate_and_store_user_info(
         self, turn_context: TurnContext, member_id: str
@@ -192,12 +157,13 @@ class FlamelBot(ActivityHandler):
         user_name = user_info.name
         locale = await self.detect_locale(turn_context)
         logger.info(f"Welcome message was sent to the user {user_name}.")
+        logger.info(f"Using locale: {locale}.")
         if "en" in locale:
             await turn_context.send_activity(get_en_welcome_message(user_name))
-            await self.custom_actions_card(turn_context, locale)
+            await custom_actions_card(turn_context, locale)
         else:
             await turn_context.send_activity(get_it_welcome_message(user_name))
-            await self.custom_actions_card(turn_context, locale)
+            await custom_actions_card(turn_context, locale)
 
     async def on_members_added_activity(
         self, members_added: [ChannelAccount], turn_context: TurnContext
@@ -313,6 +279,7 @@ class FlamelBot(ActivityHandler):
         await self.send_typing_indicator(turn_context)
         logger.info(f"The message was sent to GPA.")
         await self.send_message_with_feedback(user_validated_token, text, turn_context)
+        await self._send_suggested_actions(turn_context)
 
     async def send_message_with_feedback(
         self, user_validated_token, text, turn_context
